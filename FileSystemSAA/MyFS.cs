@@ -289,41 +289,41 @@ namespace FileSystemSAA
             }
             catch
             {
-                Console.WriteLine($"Error reading source file");
+                Console.WriteLine("Error reading source file");
                 return;
             }
 
-            // Prepare file path in the simulated file system
+            // Suzdavame file path v failovata sistema
             string filePath = SetUpFilePath(destFileName);
 
             // Get parent directory
             DirectoryFile parentDir = GetParentDir(filePath);
 
-            // Extract the destination file name
+            // Obrabotvame filepath-a na koito shte suhranim noviq fail
             string[] filePathParts = DissectFilePath(filePath);
             string fileName = filePathParts[^1];
 
-            // Check if the file already exists in the simulated file system
+            //Proverqvame dali failut veche sushtestvuva vuv failovata sistema
             if (parentDir.ContainsFile(fileName))
             {
                 Console.WriteLine($"File {fileName} already exists in the file system.");
                 return;
             }
 
-            // Check if there is enough space in the parent directory
+            // Proverqme dali ima dostatuchno mqsto v parent directory-to
             if (!parentDir.HasSpace())
             {
                 Console.WriteLine("Not enough storage in the directory.");
                 return;
             }
 
-            // Allocate blocks and inode for the new file
+            // Allocate blocks and inode za noviq fail
             _stream.Position = 0;
             short blockSize = _reader.ReadInt16();
 
             int blocksRequired = (sourceData.Length + (blockSize - 1)) / blockSize;
 
-            // Allocate the blocks and inode
+            // Allocate blocks and inode
             int[] blocks;
             try
             {
@@ -346,16 +346,16 @@ namespace FileSystemSAA
                 return;
             }
 
-            // Add the file to the parent directory
+            // Dobavqme failut kum parent directory-to
             parentDir[parentDir.GetFreeIndex()] = new DirectoryEntry(fileName, (short)inodeIndex);
 
-            // Update the inode table
+            // Update inode table
             INodeTable[inodeIndex] = new INode(FileType.DataFile, (uint)sourceData.Length, (uint)blocks[0]);
 
-            // Write to FAT
+            // Zapisvame vuv FAT
             FAT.WriteFAT(blocks[0], blocks);
 
-            // Write the file data to the allocated blocks
+            // Zapisvame sudurjanieto na file-a v zadelenite blockove
             int byteIndex = 0;
             byte[] buffer = new byte[blockSize];
 
