@@ -13,7 +13,7 @@ namespace FileSystemSAA
         public uint BLOCK_AMOUNT { get; }
         public uint FREE_BLOCKS { get; private set; }
         public ushort INODE_AMOUNT { get; }
-        public ushort FREE_INODES { get; private set; }
+        public ushort FREE_INODES{ get; private set; }
         public uint FSYS_TOTAL_STORAGE { get; }
         public uint FSYS_AVAILABLE_STORAGE { get; private set; }
         public ushort INODE_BITMAP_POSITION { get; private set; }

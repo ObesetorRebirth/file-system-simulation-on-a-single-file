@@ -271,6 +271,117 @@ namespace FileSystemSAA
                 SuperBlock.Update(this, (uint)blocks.Length, 0, UpdateOperation.Subtract);
             }
         }
+
+        public void CopyFile(string sourcePath, string destFileName)
+        {
+            // Proverqva dali faila sushtestva
+            if (!File.Exists(sourcePath))
+            {
+                Console.WriteLine($"Source file {sourcePath} does not exist.");
+                return;
+            }
+
+            // 4ete sudurjanieto na faila koito kopirame
+            byte[] sourceData;
+            try
+            {
+                sourceData = File.ReadAllBytes(sourcePath);
+            }
+            catch
+            {
+                Console.WriteLine($"Error reading source file");
+                return;
+            }
+
+            // Prepare file path in the simulated file system
+            string filePath = SetUpFilePath(destFileName);
+
+            // Get parent directory
+            DirectoryFile parentDir = GetParentDir(filePath);
+
+            // Extract the destination file name
+            string[] filePathParts = DissectFilePath(filePath);
+            string fileName = filePathParts[^1];
+
+            // Check if the file already exists in the simulated file system
+            if (parentDir.ContainsFile(fileName))
+            {
+                Console.WriteLine($"File {fileName} already exists in the file system.");
+                return;
+            }
+
+            // Check if there is enough space in the parent directory
+            if (!parentDir.HasSpace())
+            {
+                Console.WriteLine("Not enough storage in the directory.");
+                return;
+            }
+
+            // Allocate blocks and inode for the new file
+            _stream.Position = 0;
+            short blockSize = _reader.ReadInt16();
+
+            int blocksRequired = (sourceData.Length + (blockSize - 1)) / blockSize;
+
+            // Allocate the blocks and inode
+            int[] blocks;
+            try
+            {
+                blocks = DataBlockBitmap.GetFreeBits(blocksRequired);
+            }
+            catch
+            {
+                Console.WriteLine("Error allocating blocks");
+                return;
+            }
+
+            int inodeIndex;
+            try
+            {
+                inodeIndex = INodeBitmap.GetFreeBit();
+            }
+            catch
+            {
+                Console.WriteLine("Error allocating inode");
+                return;
+            }
+
+            // Add the file to the parent directory
+            parentDir[parentDir.GetFreeIndex()] = new DirectoryEntry(fileName, (short)inodeIndex);
+
+            // Update the inode table
+            INodeTable[inodeIndex] = new INode(FileType.DataFile, (uint)sourceData.Length, (uint)blocks[0]);
+
+            // Write to FAT
+            FAT.WriteFAT(blocks[0], blocks);
+
+            // Write the file data to the allocated blocks
+            int byteIndex = 0;
+            byte[] buffer = new byte[blockSize];
+
+            foreach (int block in blocks)
+            {
+                Array.Clear(buffer, 0, buffer.Length);
+
+                for (int j = 0; j < buffer.Length; j++)
+                {
+                    if (byteIndex < sourceData.Length)
+                    {
+                        buffer[j] = sourceData[byteIndex++];
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                WriteDataBlock((uint)block, buffer);
+            }
+
+            SuperBlock.Update(this, (uint)blocks.Length, 1, UpdateOperation.Subtract);
+            Console.WriteLine($"File {fileName} successfully copied to the file system.");
+        }
+
         public void AppendToFile(string input, string content)
         {
             string filePath = SetUpFilePath(input);

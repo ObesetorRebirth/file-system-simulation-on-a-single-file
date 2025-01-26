@@ -1,4 +1,5 @@
 ﻿using FileSystemSAA;
+using System.ComponentModel.Design;
 
 internal class Program
 {
@@ -17,6 +18,8 @@ internal class Program
         Console.WriteLine("write filepath \"<content>\" or write append <filepath> \"<content>\"");
         Console.WriteLine("--------------------------------------------------------------");
         Console.WriteLine("cat (shows file content) filepath");
+        Console.WriteLine("--------------------------------------------------------------");
+        Console.WriteLine("cpin (copies a file from the host to the simulated file system) <sourcePath> <destFileName>");
         Console.WriteLine("--------------------------------------------------------------");
 
         bool inFileSys = true;
@@ -54,6 +57,9 @@ internal class Program
                             break;
                         case "cat":
                             fsys.ShowFileContent(commandDissected[1]);
+                            break;
+                        case "cpin":
+                                fsys.CopyFile(commandDissected[1], commandDissected[2]);
                             break;
                         default:
                             Console.WriteLine("Invalid input.");
