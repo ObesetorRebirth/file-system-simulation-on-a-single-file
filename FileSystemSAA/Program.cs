@@ -5,7 +5,7 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        MyFS fsys = new MyFS(@"C:\Users\vikdi\SAA\fsys", 512, 200, 20);
+        MyFS fsys = new MyFS(@"Provide a file path where you wish to store the file system", 512, 200, 20);
 
         Console.WriteLine("mkdir (creates an empty directory) filepath \\ Directory name");
         Console.WriteLine("--------------------------------------------------------------");
